@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Host Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0a0a0c',
+                            800: '#121216',
+                            700: '#1a1a22',
+                            600: '#272732',
+                        },
+                        accent: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #121216; }
+        ::-webkit-scrollbar-thumb { background: #272732; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col justify-between selection:bg-accent-500 selection:text-white">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header -->
+    <header class="border-b border-dark-600 bg-dark-800/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-accent-600/20 border border-accent-500/30 flex items-center justify-center text-accent-500 shadow-lg shadow-accent-500/10">
+                    <i class="fa-solid fa-bolt text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight">Bot Host</h1>
+                    <p class="text-xs text-gray-400">Telegram Bot Hosting Panel</p>
+                </div>
+            </div>
+
+            <!-- Connection Status -->
+            <div class="flex items-center space-x-2 bg-dark-700/60 border border-dark-600 px-3 py-1.5 rounded-full text-xs font-medium">
+                <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-red-500 transition-all duration-300 shadow-sm shadow-red-500/50"></span>
+                <span id="connection-text" class="text-gray-300">Disconnected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Configuration & Deployment -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Backend API Config Card -->
+            <div class="bg-dark-800 border border-dark-600 rounded-2xl p-5 shadow-xl transition-all duration-300 hover:border-dark-500">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold text-sm text-gray-200 flex items-center gap-2">
+                        <i class="fa-solid fa-server text-accent-500"></i> Backend API URL
+                    </h2>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <input type="url" id="backend-url" placeholder="https://my-backend.onrender.com" 
+                            class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-accent-500 transition-colors">
+                    </div>
+                    <button id="save-url-btn" class="w-full bg-dark-700 hover:bg-dark-600 border border-dark-600 text-gray-200 font-medium py-2 px-4 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i> Saqlash va Sinash
+                    </button>
+                </div>
+            </div>
+
+            <!-- Deploy Form Card -->
+            <div class="bg-dark-800 border border-dark-600 rounded-2xl p-5 shadow-xl transition-all duration-300 hover:border-dark-500">
+                <h2 class="font-semibold text-sm text-gray-200 flex items-center gap-2 mb-4">
+                    <i class="fa-solid fa-rocket text-accent-500"></i> Deploy qilish
+                </h2>
+                
+                <form id="deploy-form" class="space-y-4">
+                    <!-- Project Name -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1.5">Project nomi</label>
+                        <input type="text" id="project-name" value="my_telegram_bot" required
+                            class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3.5 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-accent-500 transition-colors">
+                    </div>
+
+                    <!-- Python File Upload -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1.5">Python Bot fayli (.py)</label>
+                        <label class="flex flex-col items-center justify-center border-2 border-dashed border-dark-600 hover:border-accent-500/50 bg-dark-900/50 rounded-xl p-4 cursor-pointer transition-all group">
+                            <i class="fa-solid fa-code text-gray-400 group-hover:text-accent-500 mb-1.5 transition-colors"></i>
+                            <span id="py-file-name" class="text-xs text-gray-300 font-medium truncate max-w-full">Fayl tanlash (.py)</span>
+                            <input type="file" id="py-file" accept=".py" class="hidden">
+                        </label>
+                    </div>
+
+                    <!-- Requirements File Upload -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1.5">requirements.txt (ixtiyoriy)</label>
+                        <label class="flex flex-col items-center justify-center border-2 border-dashed border-dark-600 hover:border-accent-500/50 bg-dark-900/50 rounded-xl p-4 cursor-pointer transition-all group">
+                            <i class="fa-solid fa-file-lines text-gray-400 group-hover:text-accent-500 mb-1.5 transition-colors"></i>
+                            <span id="req-file-name" class="text-xs text-gray-300 font-medium truncate max-w-full">Fayl tanlash (.txt)</span>
+                            <input type="file" id="req-file" accept=".txt" class="hidden">
+                        </label>
+                    </div>
+
+                    <!-- Deploy Submit Button -->
+                    <button type="submit" id="deploy-btn" class="w-full bg-accent-600 hover:bg-accent-500 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-accent-600/20 active:scale-[0.99]">
+                        <i class="fa-solid fa-rocket"></i> 🚀 Deploy / Start Bot
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Monitoring, Controls & Logs -->
+        <div class="lg:col-span-2 space-y-6 flex flex-col">
+            
+            <!-- Status & Controls Card -->
+            <div class="bg-dark-800 border border-dark-600 rounded-2xl p-5 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-dark-600">
+                    <div>
+                        <span class="text-xs text-gray-400 block mb-1">Bot statusi</span>
+                        <div class="flex items-center space-x-2">
+                            <span id="bot-status-dot" class="w-3 h-3 rounded-full bg-gray-500"></span>
+                            <span id="bot-status-text" class="font-semibold text-base text-gray-200">Stopped</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block mb-1">Uptime</span>
+                        <div id="uptime-display" class="font-mono font-semibold text-base text-accent-500">00:00:00</div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-4">
+                    <button id="btn-deploy" class="bg-dark-700 hover:bg-accent-600 hover:text-white border border-dark-600 hover:border-accent-500 text-gray-300 font-medium py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rocket"></i> Deploy
+                    </button>
+                    <button id="btn-start" class="bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 hover:text-white font-medium py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-play"></i> Start
+                    </button>
+                    <button id="btn-stop" class="bg-amber-600/20 hover:bg-amber-600 border border-amber-500/30 hover:border-amber-500 text-amber-400 hover:text-white font-medium py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-stop"></i> Stop
+                    </button>
+                    <button id="btn-restart" class="bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-white font-medium py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rotate-right"></i> Restart
+                    </button>
+                    <button id="btn-delete" class="col-span-2 sm:col-span-1 bg-red-600/20 hover:bg-red-600 border border-red-500/30 hover:border-red-500 text-red-400 hover:text-white font-medium py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+
+            <!-- Console Logs Terminal Card -->
+            <div class="bg-dark-800 border border-dark-600 rounded-2xl p-5 shadow-xl flex-grow flex flex-col">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-dark-600">
+                    <span class="font-semibold text-sm text-gray-200 flex items-center gap-2">
+                        <i class="fa-solid fa-terminal text-accent-500"></i> Console Logs
+                    </span>
+                    <button id="clear-logs" class="text-xs text-gray-400 hover:text-gray-200 transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-eraser"></i> Tozalash
+                    </button>
+                </div>
+                
+                <div id="console-logs" class="bg-dark-900 border border-dark-600 rounded-xl p-4 font-mono text-xs text-gray-300 h-64 lg:h-96 overflow-y-auto flex flex-col space-y-1.5 select-text">
+                    <div class="text-gray-500">--------------------------------</div>
+                    <div class="text-accent-500">Bot Host panel ishga tushdi. Backend URL kuting yoki ulang...</div>
+                    <div class="text-gray-500">--------------------------------</div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-dark-600 bg-dark-800/40 py-4 text-center text-xs text-gray-500">
+        <p>Bot Host Dashboard &bull; Secure Backend Integration</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
